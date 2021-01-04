@@ -1,0 +1,79 @@
+from flask import Flask
+from flask import request, render_template
+
+from joblib import load
+import numpy as np
+
+app = Flask(__name__)
+
+#TODO: load iris classfier from file
+#      use try-except, print message and exit if there is a problem
+
+
+@app.route('/')
+def index():
+    return render_template('prediction_input.html')
+
+#GET REQUEST
+@app.route('/iris_prediction')
+def get_iris_prediction():
+    
+    values_ok = True
+    pred_str = 'None'
+    pred_proba = 0.0
+
+    #TODO: Get feature values as float from request.values dictionary
+    #      Set values_ok to False if any conversion produces an error.
+    
+    dic = request.values
+        
+    try:
+        #assign values
+        sepal_length = float(dic['sepal_length'])
+        sepal_width = float(dic['sepal_width'])
+        petal_length = float(dic['petal_length'])
+        petal_width = float(dic['petal_width'])
+        
+    except:
+        #excepts this as the error
+        values_ok = False
+    
+    if values_ok:
+        model = load("iris_model.joblib")
+
+        arr = np.array([[sepal_length,
+                       sepal_width,
+                       petal_length,
+                       petal_width]])
+
+        #TODO: call predict() on the loaded classifier using the feature values
+        #      and retrieve the predicted iris flower string
+        #      assign string to pred_str
+        prediction = model.predict(arr)[0]
+
+        pred_str = ''
+
+        if prediction == 0:
+            pred_str = 'setosa'
+        elif prediction == 1:
+            pred_str = 'versicolor'
+        elif prediction == 2:
+            pred_str = 'virginica'
+
+        #TODO: call predict_proba() on the loaded classifier
+        #      assign probablity to pred_proba
+
+        pred_proba = model.predict_proba(arr)[0][prediction]
+    else:
+        pred_str = "Invalid Input Values"
+    
+    return render_template('prediction_response.html',
+                           request_dict=request.values,
+                           pred_str=pred_str,
+                           pred_proba='{:.3f}'.format(pred_proba),
+                           values_ok=values_ok) 
+
+
+if __name__ == '__main__':
+    app.debug = True
+    app.run()
